@@ -5,91 +5,89 @@ import psycopg2
 
 app = FastAPI()
 
-# ✅ CORS fix
+# CORS enabled for all origins (browser access)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # development only
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# ✅ Correct model matching HTML fields
+# Pydantic model for Attendance
 class AttendanceEntry(BaseModel):
     site: str
     name: str
-    date: str
+    date: str  # Format: YYYY-MM-DD
     inout: str
-    intime: str
-    outtime: str
+    intime: str = None
+    outtime: str = None
     reason: str
     approved_by: str
 
-# ✅ Database connection
+# DB connection function
 def get_conn():
     return psycopg2.connect(
         "postgresql://a_axbj_user:r57Ib3SXMZ75aOSrtv5cIW1fLveBOOeL@dpg-d264r3uuk2gs73bgv2kg-a.singapore-postgres.render.com/a_axbj"
     )
 
+# Root endpoint
 @app.get("/")
-def home():
-    return {"status": "FastAPI is running!"}
+def root():
+    return {"message": "Attendance API working!"}
 
+# Add Entry
 @app.post("/add/")
-def add_entry(emp: AttendanceEntry):
+def add_entry(entry: AttendanceEntry):
     try:
         conn = get_conn()
-        cursor = conn.cursor()
+        cur = conn.cursor()
 
-        cursor.execute("""
-        CREATE TABLE IF NOT EXISTS Attendance (
-            id SERIAL PRIMARY KEY,
-            site TEXT,
-            name TEXT,
-            date DATE,
-            inout TEXT,
-            intime TIME,
-            outtime TIME,
-            reason TEXT,
-            approved_by TEXT
-        );
+        # Table creation if not exists
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS Attendance (
+                id SERIAL PRIMARY KEY,
+                site TEXT,
+                name TEXT,
+                date DATE,
+                inout TEXT,
+                intime TIME,
+                outtime TIME,
+                reason TEXT,
+                approved_by TEXT
+            );
         """)
 
-        cursor.execute("""
+        # Insert data
+        cur.execute("""
             INSERT INTO Attendance
             (site, name, date, inout, intime, outtime, reason, approved_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s);
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """, (
-            emp.site,
-            emp.name,
-            emp.date,
-            emp.inout,
-            emp.intime,
-            emp.outtime,
-            emp.reason,
-            emp.approved_by
+            entry.site, entry.name, entry.date, entry.inout,
+            entry.intime, entry.outtime, entry.reason, entry.approved_by
         ))
 
         conn.commit()
-        cursor.close()
+        cur.close()
         conn.close()
         return {"message": "✅ Entry added successfully"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+# View all
 @app.get("/view/")
 def view_entries():
     try:
         conn = get_conn()
-        cursor = conn.cursor()
-        cursor.execute("SELECT site, name, date, inout, intime, outtime, reason, approved_by FROM Attendance ORDER BY id DESC;")
-        rows = cursor.fetchall()
-        cursor.close()
-        conn.close()
+        cur = conn.cursor()
 
-        attendance = []
+        cur.execute("SELECT site, name, date, inout, intime, outtime, reason, approved_by FROM Attendance ORDER BY id DESC;")
+        rows = cur.fetchall()
+
+        entries = []
         for row in rows:
-            attendance.append({
+            entries.append({
                 "site": row[0],
                 "name": row[1],
                 "date": row[2],
@@ -99,6 +97,9 @@ def view_entries():
                 "reason": row[6],
                 "approved_by": row[7]
             })
-        return {"attendance": attendance}
+
+        cur.close()
+        conn.close()
+        return {"attendance": entries}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
