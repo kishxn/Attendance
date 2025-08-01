@@ -31,6 +31,8 @@ def get_conn():
         "postgresql://a_axbj_user:r57Ib3SXMZ75aOSrtv5cIW1fLveBOOeL@dpg-d264r3uuk2gs73bgv2kg-a.singapore-postgres.render.com/a_axbj"
     )
 
+
+
 @app.post("/add/")
 def add_entry(entry: AttendanceEntry):
     try:
@@ -60,9 +62,13 @@ def add_entry(entry: AttendanceEntry):
 
 
 
+
 @app.get("/")
 def read_root():
     return {"message": "✅ Attendance FastAPI is Running!"}
+
+
+
 
 @app.get("/view/")
 def view_entries():
