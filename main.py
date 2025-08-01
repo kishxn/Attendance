@@ -38,33 +38,18 @@ def add_entry(entry: AttendanceEntry):
         cur = conn.cursor()
 
         cur.execute("""
-            CREATE TABLE IF NOT EXISTS Attendance (
-                id SERIAL PRIMARY KEY,
-                site_name TEXT NOT NULL,
-                employee_name TEXT NOT NULL,
-                entry_date DATE NOT NULL,
-                in_out TEXT NOT NULL,
-                io_date DATE NOT NULL,
-                io_time TIME NOT NULL,
-                reason TEXT,
-                approved_by TEXT
-            );
-        """)
-
-        cur.execute("""
-            INSERT INTO Attendance
-            (site_name, employee_name, entry_date, in_out, io_date, io_time, reason, approved_by)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """, (
-            entry.site_name,
-            entry.employee_name,
-            entry.entry_date,
-            entry.in_out,
-            entry.io_date,
-            entry.io_time,
-            entry.reason,
-            entry.approved_by
-        ))
+    INSERT INTO Attendance
+    ("SiteName", "Name", "Date", "In&Out", "Time", "Reason", "ApprovedBy")
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+""", (
+    entry.site_name,     # Example: "Vandaloor"
+    entry.name,          # Example: "Ram"
+    entry.date,          # Example: "2025-08-01"
+    entry.inout,         # Example: "In"
+    entry.time,          # Example: "17:57"
+    entry.reason,        # Example: "Meeting"
+    entry.approved_by    # Example: "Vinoth"
+))
 
         conn.commit()
         cur.close()
@@ -73,6 +58,12 @@ def add_entry(entry: AttendanceEntry):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
+
+@app.get("/")
+def read_root():
+    return {"message": "✅ Attendance FastAPI is Running!"}
+
 @app.get("/view/")
 def view_entries():
     try:
@@ -80,6 +71,7 @@ def view_entries():
         cur = conn.cursor()
 
         cur.execute("SELECT site_name, employee_name, entry_date, in_out, io_date, io_time, reason, approved_by FROM Attendance ORDER BY id DESC;")
+
         rows = cur.fetchall()
 
         entries = []
