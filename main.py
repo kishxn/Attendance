@@ -36,7 +36,4 @@ def predict(name: str, mark: int):
     result = s.get_result()
     grade = Student.grade_from_mark(mark)
     school = Student.get_school_name()
-
-    message = f"{result} with grade {grade} from {school}"
-
-    return HTMLResponse(content=message)
+    return f"{result} with grade {grade} from {school}"
