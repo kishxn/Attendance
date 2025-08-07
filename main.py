@@ -1,5 +1,6 @@
 from fastapi import FastAPI
-from typing import Optional
+from fastapi.responses import HTMLResponse
+import pandas as pd
 
 app = FastAPI()
 
@@ -11,10 +12,7 @@ class Student:
         self.mark = mark
 
     def get_result(self):
-        if self.mark >= 35:
-            return f"{self.name} passed"
-        else:
-            return f"{self.name} failed"
+        return f"{self.name} passed" if self.mark >= 35 else f"{self.name} failed"
 
     @classmethod
     def get_school_name(cls):
@@ -33,22 +31,46 @@ class Student:
         else:
             return "Fail"
 
-
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to Result Predictor API"}
-
-import pandas as pd
-@app.get("/predict")
+@app.get("/predict", response_class=HTMLResponse)
 def predict(name: str, mark: int):
     s = Student(name, mark)
 
-        # 🔹 Create one-row DataFrame
     df = pd.DataFrame([{
         "name": name,
         "mark": mark,
-        "result": s.get_result()
+        "result": s.get_result(),
+        "grade": Student.grade_from_mark(mark),
+        "school": Student.get_school_name()
     }])
 
-    # 🔹 Return as HTML table
-    return df.to_html(index=False)
+    html_table = df.to_html(index=False)
+
+    # Optionally wrap inside full HTML document
+    full_html = f"""
+    <html>
+    <head>
+      <title>Student Result</title>
+      <style>
+        table {{
+          width: 60%;
+          border-collapse: collapse;
+          margin: 20px auto;
+        }}
+        th, td {{
+          border: 1px solid black;
+          padding: 8px;
+          text-align: center;
+        }}
+        th {{
+          background-color: #f2f2f2;
+        }}
+      </style>
+    </head>
+    <body>
+      <h2 style='text-align:center;'>Student Result</h2>
+      {html_table}
+    </body>
+    </html>
+    """
+
+    return HTMLResponse(content=full_html)
