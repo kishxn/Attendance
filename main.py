@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from typing import Optional
+from fastapi.responses import JSONResponse
 
 app = FastAPI()
 
@@ -41,10 +42,12 @@ def read_root():
 @app.get("/predict")
 def predict(name: str, mark: int):
     s = Student(name, mark)
-    return {
+    result_data= {
         "name": name,
         "mark": mark,
         "result": s.get_result(),
         "grade": Student.grade_from_mark(mark),
         "school": Student.get_school_name()
     }
+    return JSONResponse(content=result_data)
+
