@@ -1,6 +1,4 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
-
 app = FastAPI()
 
 class Student:
@@ -30,10 +28,11 @@ class Student:
         else:
             return "Fail"
 
-@app.get("/predict", response_class=HTMLResponse)
+@app.get("/")
+def root():
+    return {"message": "Hello from Render!"}
+
+@app.get("/predict")
 def predict(name: str, mark: int):
-    s = Student(name, mark)
-    result = s.get_result()
-    grade = Student.grade_from_mark(mark)
-    school = Student.get_school_name()
-    return f"{result} with grade {grade} from {school}"
+    result = "Pass" if mark >= 35 else "Fail"
+    return {"name": name, "mark": mark, "result": result}
