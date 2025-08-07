@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from typing import Optional
+
 app = FastAPI()
 
 class Student:
@@ -9,7 +11,10 @@ class Student:
         self.mark = mark
 
     def get_result(self):
-        return f"{self.name} passed" if self.mark >= 35 else f"{self.name} failed"
+        if self.mark >= 35:
+            return f"{self.name} passed"
+        else:
+            return f"{self.name} failed"
 
     @classmethod
     def get_school_name(cls):
@@ -28,11 +33,18 @@ class Student:
         else:
             return "Fail"
 
+
 @app.get("/")
-def root():
-    return {"message": "Hello from Render!"}
+def read_root():
+    return {"message": "Welcome to Result Predictor API"}
 
 @app.get("/predict")
 def predict(name: str, mark: int):
-    result = "Pass" if mark >= 35 else "Fail"
-    return {"name": name, "mark": mark, "result": result}
+    s = Student(name, mark)
+    return {
+        "name": name,
+        "mark": mark,
+        "result": s.get_result(),
+        "grade": Student.grade_from_mark(mark),
+        "school": Student.get_school_name()
+    }
