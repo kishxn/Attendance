@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse
-import pandas as pd
 
 app = FastAPI()
 
@@ -34,43 +33,10 @@ class Student:
 @app.get("/predict", response_class=HTMLResponse)
 def predict(name: str, mark: int):
     s = Student(name, mark)
+    result = s.get_result()
+    grade = Student.grade_from_mark(mark)
+    school = Student.get_school_name()
 
-    df = pd.DataFrame([{
-        "name": name,
-        "mark": mark,
-        "result": s.get_result(),
-        "grade": Student.grade_from_mark(mark),
-        "school": Student.get_school_name()
-    }])
+    message = f"{result} with grade {grade} from {school}"
 
-    html_table = df.to_html(index=False)
-
-    # Optionally wrap inside full HTML document
-    full_html = f"""
-    <html>
-    <head>
-      <title>Student Result</title>
-      <style>
-        table {{
-          width: 60%;
-          border-collapse: collapse;
-          margin: 20px auto;
-        }}
-        th, td {{
-          border: 1px solid black;
-          padding: 8px;
-          text-align: center;
-        }}
-        th {{
-          background-color: #f2f2f2;
-        }}
-      </style>
-    </head>
-    <body>
-      <h2 style='text-align:center;'>Student Result</h2>
-      {html_table}
-    </body>
-    </html>
-    """
-
-    return HTMLResponse(content=full_html)
+    return HTMLResponse(content=message)
